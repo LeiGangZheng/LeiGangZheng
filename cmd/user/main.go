@@ -3,6 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io/ioutil"
+	"os"
+	"path"
 	"time"
 
 	"github.com/jinzhu/gorm"
@@ -45,6 +48,13 @@ func main() {
 		panic(fmt.Errorf("init dst db error:[%s]", err.Error()))
 	}
 
+	dir, err := ioutil.ReadDir(cfg.Log.Dir)
+	for _, d := range dir {
+		fn := path.Join([]string{cfg.Log.Dir, d.Name()}...)
+		fmt.Println("remove name: ", fn)
+		os.RemoveAll(fn)
+	}
+
 	// if *test {
 	// 	err := src.Ping()
 	// 	if err != nil {
@@ -72,8 +82,8 @@ func main() {
 	}
 
 	var i int64
-	for i = 1; i < totalCnt+1; i = i + *step {
-		var idxEnd int64 = i + *step
+	for i = 0; i < totalCnt+1; i = i + *step {
+		var idxEnd int64 = i + *step - 1
 		fmt.Printf("deal users [ %d - %d ] ...\n", i, idxEnd)
 
 		uls, err := src.ReadUsers(i, idxEnd)

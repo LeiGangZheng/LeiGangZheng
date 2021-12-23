@@ -127,7 +127,6 @@ func WriteUsers(ins []srcm.User) error {
 			merr, ok := db.Error.(*mysql.MySQLError)
 			if ok && merr.Number == 1062 {
 				duplicate = duplicate + 1
-				continue
 			}
 			log.Error("write user failed", "error", db.Error.Error(), "src_data", u, "insert_data", user)
 			//note
@@ -140,7 +139,7 @@ func WriteUsers(ins []srcm.User) error {
 			}
 			merr, ok := db.Error.(*mysql.MySQLError)
 			if ok && merr.Number == 1062 {
-				continue
+				duplicate = duplicate + 1
 			}
 			log.Error("write userinfo failed", "error", db.Error.Error(), "src_data", u, "insert_data", userInfo)
 			//note
