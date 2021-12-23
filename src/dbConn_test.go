@@ -105,8 +105,8 @@ func TestReadThirdPartyLogin(t *testing.T) {
 }
 
 func TestGetWebSite(t *testing.T) {
-	//url := "https://cdn-client-store6.deepin.com/api/user/login;(:);https://store.deepin.com/api/user/login;(:);http://store.deepin.com/api/user/login;(:);https://community-store.deepin.com/api/user/login"
-	url := "1111" //";(:);22222222;(:);333333333gin;(:);5555555555//login"
+	url := "https://cdn-client-store6.deepin.com/api/user/login;(:);https://store.deepin.com/api/user/login;(:);http://store.deepin.com/api/user/login;(:);https://community-store.deepin.com/api/user/login"
+	//url := "1111" //";(:);22222222;(:);333333333gin;(:);5555555555//login"
 	s := GetWebSite(url)
 
 	if len(s) != len("https://cdn-client-store6.deepin.com/api/user/login,https://store.deepin.com/api/user/login,http://store.deepin.com/api/user/login,https://community-store.deepin.com/api/user/login") {

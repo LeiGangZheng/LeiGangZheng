@@ -1,0 +1,12 @@
+1) 修改配置文件
+分别修改  DB_SRC_Oauth.dsn（旧的deepinid） , DB_SRC_User.dsn（旧的deepin_user） , DB_DST_User.dsn（新的deepinid_user）， 用于连接新旧mysql的db
+默认读取的配置文件为：  ./user_cfg.toml  ， 如果要加载  非同目录下其他名字 的配置文件， 需要用  -f path/file ，指定加载；
+
+2）执行迁移程序
+./deepin-migrate-users 
+./deepin-migrate-users -f path/file   （指定配置文件的方式）
+
+3）注意事项
+旧的deepin_user， 针对 国内 和 国外 用户 分库了， 新的deepinid_user在一个db， 因此 在做数据迁移的时候，
+需要修改两次配置文件，执行两次程序， 分别来迁移 国内 和 国外用户；
+

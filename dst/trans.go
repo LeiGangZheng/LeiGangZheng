@@ -99,8 +99,8 @@ func transClient(dstC *model.Client, srcC *srcm.Client, scopes string) error {
 	dstC.UpdatedAt = time.Now()            //更新时间
 	dstC.GruntType = 9                     //授权类型  -- ok
 	dstC.IsGrunt = false                   //是否需要在界面显示授权   -- 三方应用标识
-	dstC.IsUOS = false                     //是否是uos项目
-	dstC.IsDeepin = true                   //是否是deepin项目
+	dstC.IsUOS = true                      //是否是uos项目
+	dstC.IsDeepin = false                  //是否是deepin项目
 	return nil
 }
 
@@ -162,18 +162,4 @@ func transUserInfo(dstU *model.UserInfo, srcC *srcm.UserProfile, uid string) err
 	// dstU.Area    =
 	// dstU.Address
 	return nil
-}
-
-// get
-func IsExistItemClient(AccessID, AccessKey string) bool {
-	if _oauthDB == nil {
-		panic("db not init")
-	}
-
-	cs := []model.Client{}
-	err := _oauthDB.Table("client").Find(&cs, "AccessID = ? AND AccessKey = ?", AccessID, AccessKey).Error
-	if err == nil && len(cs) > 0 {
-		return true
-	}
-	return false
 }

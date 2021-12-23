@@ -18,36 +18,42 @@ var (
 // InitDbConn
 func InitDbConn(userCf, oauthCf *db.ConnConf) error {
 	var err error
-	// 初始化默认的DB链接
-	_userDB, err = db.NewConn1(userCf)
-	if err != nil {
-		log.Error("New db conn error", "error", err.Error())
-		return err
+	if userCf == nil && oauthCf == nil {
+		panic("Not config user or oauth src_db info")
 	}
 
 	// 初始化默认的DB链接
-	_oauthDB, err = db.NewConn1(oauthCf)
-	if err != nil {
-		log.Error("New db conn error", "error", err.Error())
-		return err
+	if userCf != nil {
+		_userDB, err = db.NewConn1(userCf)
+		if err != nil {
+			log.Error("New db conn error", "error", err.Error())
+			return err
+		}
 	}
+
+	// 初始化默认的DB链接
+	if oauthCf != nil {
+		_oauthDB, err = db.NewConn1(oauthCf)
+		if err != nil {
+			log.Error("New db conn error", "error", err.Error())
+			return err
+		}
+	}
+
 	// 写入并记录（用于排错）
-
 	return nil
 }
 
-func Ping() error {
-	err := _userDB.Debug().DB().Ping()
-	if err != nil {
-		return err
+func Ping(dc *db.Conn) error {
+	if dc == nil {
+		panic("Not InitDbConn src")
 	}
-	err = _oauthDB.Debug().DB().Ping()
-	return err
+	return dc.Debug().DB().Ping()
 }
 
 func GetUserCount() (int64, error) {
 	if _userDB == nil {
-		return 0, errors.New("input param nill")
+		panic("Not InitDbConn src_user")
 	}
 
 	u := model.User{}
@@ -60,7 +66,11 @@ func GetUserCount() (int64, error) {
 
 // user 读取  --- ok
 func ReadUsers(idxStart, idxEnd int64) ([]model.User, error) {
-	if _userDB == nil || idxStart < 0 || idxEnd < idxStart {
+	if _userDB == nil {
+		panic("Not InitDbConn src_user")
+	}
+
+	if idxStart < 0 || idxEnd < idxStart {
 		return nil, errors.New("input param error")
 	}
 
@@ -72,7 +82,7 @@ func ReadUsers(idxStart, idxEnd int64) ([]model.User, error) {
 // ok  -- 一个账号绑定多个媒体  (没有图像)
 func ReadThirdPartyLogin(uid int) ([]model.ThirdPartyLogin, error) {
 	if _oauthDB == nil {
-		return nil, errors.New("db or input param error")
+		panic("Not InitDbConn src_oauth")
 	}
 
 	tpl := []model.ThirdPartyLogin{}
@@ -95,6 +105,14 @@ func GetTplUnionID(tpl *model.ThirdPartyLogin) string {
 	return ""
 }
 
+func GetTplOpenID(tpl *model.ThirdPartyLogin) string {
+	switch tpl.Type {
+	case model.ServiceNameWechat:
+		return tpl.ID[len(model.ServiceNameWechat)+1:]
+	}
+	return ""
+}
+
 //  -- ok
 func GetWebSite(url string) string {
 	us := strings.Split(url, ";(:);")
@@ -112,7 +130,7 @@ func GetWebSite(url string) string {
 //  -- ok
 func ReadClient() ([]model.Client, error) {
 	if _oauthDB == nil {
-		return nil, errors.New("db not init")
+		panic("Not InitDbConn src_oauth")
 	}
 
 	cs := []model.Client{}
@@ -126,7 +144,7 @@ func ReadClient() ([]model.Client, error) {
 //  -- ok
 func GetClientScope(clientID string) (string, error) {
 	if _oauthDB == nil {
-		return "", errors.New("db not init")
+		panic("Not InitDbConn src_oauth")
 	}
 
 	css := []model.ClientScope{}
@@ -163,7 +181,7 @@ func GetClientScope(clientID string) (string, error) {
 //
 func ReadUserProfile(uid int) (*model.UserProfile, error) {
 	if _userDB == nil {
-		return nil, errors.New("input param error")
+		panic("Not InitDbConn src_user")
 	}
 
 	rst := model.UserProfile{} //Find(&tpl, "user_id = ?", uid).Error

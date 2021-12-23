@@ -1,1 +1,0 @@
-{"level":"error","time":"2021-11-03 15:41:14","caller":"cmd/main.go:29","msg":"New db conn error","appName":"dataMigrate","error":"Error 1045: Access denied for user 'root'@'localhost' (using password: YES)"}

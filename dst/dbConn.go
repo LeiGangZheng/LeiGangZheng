@@ -24,36 +24,43 @@ var (
 // InitDbConn
 func InitDbConn(userCf, oauthCf *db.ConnConf) error {
 	var err error
-	// 初始化默认的DB链接
-	_userDB, err = db.NewConn1(userCf)
-	if err != nil {
-		log.Error("New db conn error", "error", err.Error())
-		return err
+	if userCf == nil && oauthCf == nil {
+		panic("Not config user or oauth dst_db info")
 	}
 
 	// 初始化默认的DB链接
-	_oauthDB, err = db.NewConn1(oauthCf)
-	if err != nil {
-		log.Error("New db conn error", "error", err.Error())
-		return err
+	if userCf != nil {
+		_userDB, err = db.NewConn1(userCf)
+		if err != nil {
+			log.Error("New db conn error", "error", err.Error())
+			return err
+		}
 	}
-	// 写入并记录（用于排错）
 
+	// 初始化默认的DB链接
+	if oauthCf != nil {
+		_oauthDB, err = db.NewConn1(oauthCf)
+		if err != nil {
+			log.Error("New db conn error", "error", err.Error())
+			return err
+		}
+	}
 	return nil
 }
 
-func Ping() error {
-	err := _userDB.Debug().DB().Ping()
-	if err != nil {
-		return err
+func Ping(dc *db.Conn) error {
+	if dc == nil {
+		panic("Not InitDbConn dst")
 	}
-	err = _oauthDB.Debug().DB().Ping()
-	return err
+	return dc.Debug().DB().Ping()
 }
 
 // WriteUsers
 func WriteUsers(ins []srcm.User) error {
-	if _userDB == nil || ins == nil {
+	if _userDB == nil {
+		panic("Not InitDbConn dst_user")
+	}
+	if ins == nil {
 		return errors.New("input param nill")
 	}
 	if len(ins) == 0 {
@@ -122,7 +129,7 @@ func WriteUsers(ins []srcm.User) error {
 				duplicate = duplicate + 1
 				continue
 			}
-			log.Error("write user failed", "error", db.Error.Error(), "src_data", u, "dst_data", user)
+			log.Error("write user failed", "error", db.Error.Error(), "src_data", u, "insert_data", user)
 			//note
 			continue
 		}
@@ -135,7 +142,7 @@ func WriteUsers(ins []srcm.User) error {
 			if ok && merr.Number == 1062 {
 				continue
 			}
-			log.Error("write userinfo failed", "error", db.Error.Error(), "src_data", u, "dst_data", userInfo)
+			log.Error("write userinfo failed", "error", db.Error.Error(), "src_data", u, "insert_data", userInfo)
 			//note
 			continue
 		}
@@ -151,7 +158,7 @@ func WriteUsers(ins []srcm.User) error {
 		//
 		succ = succ + 1
 		if err = PlatformBind(u.ID, user.ID); err != nil {
-			log.Error("tpl data bind failed", "error", err.Error(), "src_data", u, "dst_data", user)
+			log.Error("tpl data bind failed", "error", err.Error(), "src_user_data", u, "dst_user_data", user)
 			//note
 		}
 	}
@@ -165,7 +172,7 @@ func WriteUsers(ins []srcm.User) error {
 //
 func PlatformBind(srcUID int, dstID string) error {
 	if _userDB == nil {
-		panic("db not init")
+		panic("Not InitDbConn dst_user")
 	}
 	tpls, err := src.ReadThirdPartyLogin(srcUID)
 	if err != nil && err != gorm.ErrRecordNotFound {
@@ -184,10 +191,11 @@ func PlatformBind(srcUID int, dstID string) error {
 		dstP.UserID = dstID                           //&model.User{ID: platform.UserID}
 		dstP.PlatformType = getPlatformType(tpl.Type) //平台类型，1微信
 		dstP.UnionID = src.GetTplUnionID(&tpl)
+		dstP.OpenID = src.GetTplOpenID(&tpl)
 		dstP.Sex = model.Secret //性别
 		err = _userDB.Table("platform").Create(dstP).Error
 		if err != nil {
-			log.Error("db platform create error", "error", err.Error(), "data", dstP)
+			log.Error("table platform create error", "error", err.Error(), "insert_data", dstP)
 			//note
 			continue
 		}
@@ -203,7 +211,7 @@ func PlatformBind(srcUID int, dstID string) error {
 // *****
 func WriteClient() error {
 	if _oauthDB == nil {
-		return errors.New("db or input param nil")
+		panic("Not InitDbConn dst_oauth")
 	}
 
 	srcCs, err := src.ReadClient()
@@ -226,20 +234,20 @@ func WriteClient() error {
 
 		scops, err1 := src.GetClientScope(c.ID)
 		if err1 != nil {
-			log.Error("GetClientScope error", err1.Error(), "src_data", c)
+			log.Error("GetClientScope error", err1.Error(), "src_client_data", c)
 			//notes
 			continue
 		}
 		err1 = transClient(client, &c, scops)
 		if err1 != nil {
-			log.Error("transClient error", err1.Error(), "src_data", c)
+			log.Error("transClient error", err1.Error(), "src_client_data", c)
 			//note
 			continue
 		}
 		//write
 		err1 = _oauthDB.Table("client").Create(client).Error
 		if err1 != nil {
-			log.Error("db client create error", "error", err1.Error(), "src_data", c, "dst_data", client)
+			log.Error("table client create error", "error", err1.Error(), "src_client_data", c, "insert_client_data", client)
 			//note
 			continue
 		}
@@ -250,6 +258,20 @@ func WriteClient() error {
 		return ErrSuccPart
 	}
 	return nil
+}
+
+// get
+func IsExistItemClient(AccessID, AccessKey string) bool {
+	if _oauthDB == nil {
+		panic("Not InitDbConn dst_oauth")
+	}
+
+	cs := []model.Client{}
+	err := _oauthDB.Table("client").Find(&cs, "AccessID = ? AND AccessKey = ?", AccessID, AccessKey).Error
+	if err == nil && len(cs) > 0 {
+		return true
+	}
+	return false
 }
 
 //xxxxxxxxxxxxxxxxxxxxxxxxxxx        end          xxxxxxxxxxxxxxxxxxxxxxxxxxx
