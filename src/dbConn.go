@@ -51,6 +51,31 @@ func Ping(dc *db.Conn) error {
 	return dc.Debug().DB().Ping()
 }
 
+// user 读取  --- ok
+func ReadUserIds(idxStart, idxEnd int64) ([]int, error) {
+	if _userDB == nil {
+		panic("Not InitDbConn src_user")
+	}
+
+	if idxStart < 0 || idxEnd < idxStart {
+		return nil, errors.New("input param error")
+	}
+
+	type xxx struct {
+		ID int `form:"uid" json:"uid" gorm:"primary_key;auto_increment"`
+	}
+
+	//users := make([]int, 0)
+	users := []xxx{}
+	err := _userDB.Table("user").Where("id between ? and ?", idxStart, idxEnd).Find(&users).Error //大于等于,小于等于
+	ids := make([]int, 0)
+	for _, v := range users {
+		ids = append(ids, v.ID)
+
+	}
+	return ids, err
+}
+
 func GetUserCount() (int64, error) {
 	if _userDB == nil {
 		panic("Not InitDbConn src_user")

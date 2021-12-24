@@ -13,3 +13,6 @@ user:
 
 oauth:
 	go build -mod vendor -o $(CURDIR)/cmd/oauth/deepin-migrate-oauth $(CURDIR)/cmd/oauth/main.go
+
+deal:
+	go build -mod vendor -o $(CURDIR)/cmd/deal/deepin-migrate-deal $(CURDIR)/cmd/deal/main.go

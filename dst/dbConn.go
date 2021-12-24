@@ -55,6 +55,28 @@ func Ping(dc *db.Conn) error {
 	return dc.Debug().DB().Ping()
 }
 
+// updateunionid
+func UpdateUnionid(uids []srcm.User) error {
+	if _userDB == nil {
+		panic("Not InitDbConn dst_user")
+	}
+	if uids == nil {
+		return errors.New("input param nill")
+	}
+	if len(uids) == 0 {
+		return nil
+	}
+
+	for _, u := range uids {
+		err := _userDB.Table("user").Where("Email = ? or PhoneNumber = ?", u.SQLEmail.String, u.SQLPhoneNumber.String).Update("UnionID", u.ID).Error
+		if err != nil {
+			log.Error("transUser error", err.Error(), "src_data", u)
+		}
+	}
+
+	return nil
+}
+
 // WriteUsers
 func WriteUsers(ins []srcm.User) error {
 	if _userDB == nil {
