@@ -25,11 +25,13 @@ type MyfConfig struct {
 
 var (
 	cfgPath = flag.String("f", "./user_cfg.toml", "the config file path")
-	step    = flag.Int64("s", 2000, "the step of read user database echo time")
+	start   = flag.Int64("start", 0, "the start of read user database")
+	step    = flag.Int64("step", 2000, "the step of read user database echo time")
 	test    = flag.Bool("test", true, "test the db connect config")
 )
 
 func main() {
+	flag.Parse()
 	// 加载配置文件
 	var cfg MyfConfig
 	err := config.Load(*cfgPath, &cfg)
@@ -82,7 +84,7 @@ func main() {
 	}
 
 	var i int64
-	for i = 0; i < totalCnt+1; i = i + *step {
+	for i = *start; i < totalCnt+1; i = i + *step {
 		var idxEnd int64 = i + *step - 1
 		fmt.Printf("deal users [ %d - %d ] ...\n", i, idxEnd)
 
