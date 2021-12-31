@@ -128,8 +128,8 @@ func transUser(dstU *model.User, srcU *srcm.User) error {
 	//dstU.PasswordUpdatedAt =
 	dstU.CreatedAt = srcU.CreatedAt
 	dstU.UpdatedAt = srcU.UpdatedAt
-	//dstU.UnionID = unionID //供帐号系统合并使用 chinauos帐号系统
-	//dstU.DeepinID =            //供帐号系统合并使用 deepin帐号系统
+	dstU.UnionID = srcU.ID //有问题后加入--2021-12-29
+	//dstU.DeepinID =
 	dstU.UserNameModifyCount = 0
 	dstU.NickNameModifyCount = 0
 	dstU.NickNameUpdatedAt = time.Now()
